@@ -1,25 +1,66 @@
 import React, { useState, useEffect } from 'react';
-import ReservaForm from "./ReservaForm";
+import { CssBaseline, Box, createTheme, ThemeProvider } from '@mui/material';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import dayjs from 'dayjs';
+import PropTypes from 'prop-types';
+import ReservaForm from './ReservaForm';
 import Navbar1 from './Navbar1';
 import CurrentDateTime from './CurrentDateTime';
+import Footer from './Footer1';
 
 
-// Configura la localización en español para Day.js
 dayjs.locale('es');
 
+const getLPTheme = (mode) => ({
+  palette: {
+    mode,
+    primary: { main: '#1976d2' },
+    secondary: { main: '#dc004e' },
+  },
+  typography: {
+    h1: { fontSize: '2.5rem', margin: '20px 0' },
+    body1: { fontSize: '1.2rem', margin: '10px 0' },
+  },
+});
+
+const ToggleCustomTheme = ({ showCustomTheme, toggleCustomTheme }) => (
+  <Box
+    sx={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      width: '100vw',
+      position: 'fixed',
+      bottom: 24,
+    }}
+  >
+  </Box>
+);
+
 const Home = () => {
+  const [mode, setMode] = useState('light');
+  const [showCustomTheme, setShowCustomTheme] = useState(false); // Cambiado a false para usar solo Material Design
   const [ultimaReserva, setUltimaReserva] = useState(null);
-  const [error, setError] = useState(null);
   const [userId, setUserId] = useState(null);
+
+  const LPtheme = createTheme(getLPTheme(mode));
+  const defaultTheme = createTheme({ palette: { mode } });
+
+  const toggleColorMode = () => {
+    setMode((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  };
+
+  const toggleCustomTheme = () => {
+    setShowCustomTheme((prev) => !prev);
+  };
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    const decodedToken = token ? JSON.parse(atob(token.split('.')[1])) : null; 
+    const decodedToken = token ? JSON.parse(atob(token.split('.')[1])) : null;
     const userId = decodedToken ? decodedToken.id : null;
     setUserId(userId);
-    
-    // Verificar si hay una última reserva en el localStorage
+
     const storedReserva = localStorage.getItem('ultimaReserva');
     if (storedReserva) {
       setUltimaReserva(JSON.parse(storedReserva));
@@ -52,24 +93,26 @@ const Home = () => {
         }
       } catch (error) {
         console.error('Error al obtener la última reserva:', error);
-        setError('No se pudo obtener la última reserva');
+        toast.error('No se pudo obtener la última reserva', {
+          className: 'custom-toast',
+          bodyClassName: 'custom-toast-body',
+          progressClassName: 'custom-toast-progress',
+        });
       }
     };
-    
+
     fetchUltimaReserva();
   }, [userId]);
 
   const handleReservaSubmit = async (reservaData) => {
     try {
-      // Verificar si la fecha de reserva es válida utilizando Dayjs
       if (!dayjs(reservaData.fecha).isValid()) {
         throw new Error('La fecha de la reserva es inválida');
       }
-  
-      // Convertir la fecha de reserva a formato ISO
+
       const fechaISO = dayjs(reservaData.fecha).toISOString();
       reservaData.fecha = fechaISO;
-  
+
       const token = localStorage.getItem('token');
       const response = await fetch('http://localhost:3001/api/reservas', {
         method: 'POST',
@@ -79,65 +122,52 @@ const Home = () => {
         },
         body: JSON.stringify(reservaData),
       });
-  
+
       if (!response.ok) {
+        const responseData = await response.json();
+        if (responseData.message === 'Límite de reservas alcanzado') {
+          throw new Error('Límite de reservas alcanzado');
+        }
+        if (responseData.message === 'No se pueden hacer reservas para fechas pasadas') {
+          throw new Error('No se pueden hacer reservas para fechas pasadas');
+        }
+        if (responseData.message === 'No se pueden hacer reservas más de un año en adelante') {
+          throw new Error('No se pueden hacer reservas más de un año en adelante');
+        }
+        if (responseData.message.includes('anticipación')) {
+          throw new Error(responseData.message);
+        }
         throw new Error('No se pudo crear la reserva');
       }
-  
-      const nuevaReserva = await response.json();
-      setUltimaReserva(nuevaReserva); // Actualiza el estado solo si la reserva se crea correctamente
-      localStorage.setItem('ultimaReserva', JSON.stringify(nuevaReserva));
+
+      return response;
     } catch (error) {
       console.error('Error al crear la reserva:', error);
-      setError('No se pudo crear la reserva');
+      toast.error(error.message);
+      throw error;
     }
   };
-
-  const handleEliminar = async (reservaId) => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:3001/api/reservas/${reservaId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-  
-      if (!response.ok) {
-        throw new Error('No se pudo eliminar la reserva');
-      }
-  
-      // Eliminar la reserva del estado de reservas
-      setUltimaReserva(null);
-      localStorage.removeItem('ultimaReserva');
-  
-    } catch (error) {
-      console.error('Error al eliminar la reserva:', error);
-      setError('No se pudo eliminar la reserva');
-    }
-  };
-  
-
-  // Manejo de cierre de sesión
-  useEffect(() => {
-    if (!userId) {
-      setUltimaReserva(null);
-      localStorage.removeItem('ultimaReserva');
-    }
-  }, [userId]);
 
   return (
-    <div>
-      <Navbar1/>
-      <div>
-        <h1 className='titulo'>Bienvenido a reserFlex</h1>
-      </div>
-      <div className="text-aling-center">
-      <CurrentDateTime/>
-      </div>
-      <ReservaForm onReservaSubmit={handleReservaSubmit} />
-    </div>
+    <ThemeProvider theme={showCustomTheme ? LPtheme : defaultTheme}>
+      <CssBaseline />
+      <Navbar1 mode={mode} toggleColorMode={toggleColorMode} />
+      <Box sx={{ bgcolor: 'background.default', textAlign: 'center', marginTop: '60px' }}>
+        <CurrentDateTime />
+        <ReservaForm onReservaSubmit={handleReservaSubmit} />
+        <Footer />
+      </Box>
+      <ToggleCustomTheme
+        showCustomTheme={showCustomTheme}
+        toggleCustomTheme={toggleCustomTheme}
+      />
+    </ThemeProvider>
   );
+};
+
+ToggleCustomTheme.propTypes = {
+  showCustomTheme: PropTypes.bool.isRequired,
+  toggleCustomTheme: PropTypes.func.isRequired,
 };
 
 export default Home;

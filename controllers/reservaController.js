@@ -1,13 +1,37 @@
+//resercaController.js
 const Reserva = require('../models/reserva');
 const mongoose = require('mongoose');
 const dayjs = require('dayjs');
 const utc = require('dayjs/plugin/utc');
 const timezone = require('dayjs/plugin/timezone');
+const { parse } = require('json2csv');
+const { Parser } = require('json2csv');
+const Configuracion = require('../models/Configuracion'); // Asegúrate de que la ruta al modelo sea correcta
+
+// Resto del código del controlador
+
 
 // Importa y configura dayjs con los plugins necesarios
 dayjs.extend(utc);
 dayjs.extend(timezone);
 dayjs.tz.setDefault('America/Argentina/Buenos_Aires');
+
+const obtenerReservasPorDia = async (fecha) => {
+  try {
+    // Obtener la fecha de inicio y fin del día en formato UTC
+    const inicioDia = dayjs(fecha).startOf('day').utc().toDate();
+    const finDia = dayjs(fecha).endOf('day').utc().toDate();
+
+    // Buscar todas las reservas para el día especificado
+    const reservasDia = await Reserva.find({ fecha: { $gte: inicioDia, $lte: finDia } });
+    return reservasDia;
+  } catch (error) {
+    console.error('Error al obtener las reservas por día:', error);
+    throw new Error('Error al obtener las reservas por día');
+  }
+};
+
+
 
 const obtenerReservas = async (req, res) => {
   try {
@@ -25,16 +49,51 @@ const crearReserva = async (req, res) => {
     const { nombre, telefono, fecha, cantidadPersonas, tipoServicio } = req.body;
     const userId = req.user.id;
 
-    // Convierte la fecha y hora a la zona horaria correcta antes de guardarla en la base de datos
+    // Convertir la fecha y hora a la zona horaria correcta antes de guardarla en la base de datos
     const fechaHoraConvertida = dayjs(fecha).tz('America/Argentina/Buenos_Aires');
 
+    // Validar que la reserva sea para el día actual o fechas futuras
+    const fechaActual = dayjs().startOf('minute'); // Comprobar desde el inicio del minuto actual
+    if (fechaHoraConvertida.isBefore(fechaActual)) {
+      return res.status(400).json({ message: 'No se pueden hacer reservas para fechas pasadas' });
+    }
+
+    // Validar que la reserva no sea más de un año en el futuro
+    const fechaMaxima = fechaActual.add(1, 'year');
+    if (fechaHoraConvertida.isAfter(fechaMaxima)) {
+      return res.status(400).json({ message: 'No se pueden hacer reservas más de un año en adelante' });
+    }
+
+    // Obtener la configuración de tiempo de anticipación y límite de reservas por día
+    const configuracion = await Configuracion.findOne();
+    if (!configuracion) {
+      return res.status(500).json({ message: 'No se encontró la configuración de reserva' });
+    }
+
+    const tiempoAnticipacionReservas = configuracion.tiempoAnticipacionReservas || 0; // Valor por defecto si la configuración no está definida
+    const limiteReservasPorDia = configuracion.limiteReservasPorDia || 3; // Valor por defecto si la configuración no está definida
+
+    // Validar que la reserva tenga al menos el tiempo de anticipación configurado
+    const horaAnticipacionMinima = fechaActual.add(tiempoAnticipacionReservas, 'hour');
+    if (fechaHoraConvertida.isBefore(horaAnticipacionMinima)) {
+      return res.status(400).json({ message: `La reserva debe hacerse con al menos ${tiempoAnticipacionReservas} horas de anticipación` });
+    }
+
+    const reservasDia = await obtenerReservasPorDia(fechaHoraConvertida);
+    console.log('[Backend] Reservas del día:', reservasDia);
+    if (reservasDia.length >= limiteReservasPorDia) {
+      console.log('[Backend] Límite de reservas alcanzado para este día');
+      return res.status(400).json({ message: 'Límite de reservas alcanzado' });
+    }
+
+    // Crear la reserva
     const reserva = new Reserva({
       nombre,
       telefono,
       fecha: fechaHoraConvertida,
       cantidadPersonas,
       tipoServicio,
-      userId: userId,
+      userId,
     });
 
     const nuevaReserva = await reserva.save();
@@ -43,6 +102,12 @@ const crearReserva = async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 };
+
+
+
+
+
+
 
 const eliminarReserva = async (req, res) => {
   try {
@@ -68,12 +133,12 @@ const eliminarReserva = async (req, res) => {
 const actualizarReserva = async (req, res) => {
   try {
     const { id } = req.params;
-    const { nombre, fecha, cantidadPersonas } = req.body;
+    const { nombre, fecha, cantidadPersonas, tipoServicio, telefono } = req.body; // Incluir `telefono`
 
     // No es necesario verificar el usuario para los administradores
     const reservaActualizada = await Reserva.findByIdAndUpdate(
       id,
-      { nombre, fecha, cantidadPersonas },
+      { nombre, fecha, cantidadPersonas, tipoServicio, telefono }, // Incluir `telefono`
       { new: true }
     );
 
@@ -82,6 +147,8 @@ const actualizarReserva = async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 };
+
+
 
 
 const obtenerUltimaReserva = async (req, res) => {
@@ -202,6 +269,141 @@ const obtenerTodasReservas = async (req, res) => {
   }
 };
 
+const descargarReservasUltimoMes = async (req, res) => {
+  try {
+    // Obtener la fecha de inicio y fin del mes actual
+    const inicioMesActual = dayjs().startOf('month');
+    const finMesActual = dayjs().endOf('month');
+
+    // Obtener las reservas del último mes ordenadas por fecha de creación descendente
+    const reservasUltimoMes = await Reserva.find({
+      createdAt: {
+        $gte: inicioMesActual.toDate(),
+        $lte: finMesActual.toDate()
+      }
+    }).sort({ createdAt: -1 }); // Ordenar por fecha de creación descendente
+
+    // Crear el encabezado del informe
+    const header = `Informe de Reservas del último Mes\nFecha de generación: ${dayjs().format('DD/MM/YYYY HH:mm')}\n\n`;
+
+    // Mapear las reservas a un formato compatible con json2csv
+    const csvData = reservasUltimoMes.map(reserva => ({
+      Nombre: reserva.nombre,
+      Teléfono: reserva.telefono,
+      Fecha: dayjs(reserva.fecha).format('DD/MM/YYYY HH:mm'),
+      'Cantidad de Personas': reserva.cantidadPersonas,
+      'Tipo de Servicio': reserva.tipoServicio
+    }));
+
+    // Configurar opciones de json2csv
+    const opts = {
+      fields: ['Nombre', 'Teléfono', 'Fecha', 'Cantidad de Personas', 'Tipo de Servicio'],
+      delimiter: ';',
+      utf8ByteOrderMark: true
+    };
+
+    // Convertir los datos a formato CSV
+    const parser = new Parser(opts);
+    const csv = `${header}${parser.parse(csvData)}`; // Agregar el encabezado al inicio del archivo CSV
+
+    // Establecer las cabeceras de la respuesta para indicar que se va a descargar un archivo CSV
+    res.setHeader('Content-Disposition', 'attachment; filename="reservas-ultimo-mes.csv"');
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8'); // Especificar UTF-8 como codificación de caracteres
+
+    // Enviar el archivo CSV como respuesta
+    res.status(200).send(csv);
+  } catch (error) {
+    console.error('Error al descargar el informe de reservas del último mes:', error);
+    res.status(500).json({ message: 'Error al descargar el informe de reservas del último mes' });
+  }
+};
+
+const obtenerReservasUltimosTresMeses = async (req, res) => {
+  try {
+    const fechaActual = dayjs();
+    const fechaInicioTresMeses = fechaActual.subtract(3, 'month');
+
+    // Obtener las reservas de los últimos 3 meses ordenadas por fecha de creación descendente
+    const reservasUltimosTresMeses = await Reserva.find({
+      createdAt: {
+        $gte: fechaInicioTresMeses.toDate(),
+        $lte: fechaActual.toDate()
+      }
+    }).sort({ createdAt: -1 }); // Ordenar por fecha de creación descendente
+
+    const header = `Informe de Reservas de los últimos 3 meses\nFecha de generación: ${dayjs().format('DD/MM/YYYY HH:mm')}\n\n`;
+
+    const csvData = reservasUltimosTresMeses.map(reserva => ({
+      Nombre: reserva.nombre,
+      Teléfono: reserva.telefono,
+      Fecha: dayjs(reserva.fecha).format('DD/MM/YYYY HH:mm'),
+      'Cantidad de Personas': reserva.cantidadPersonas,
+      'Tipo de Servicio': reserva.tipoServicio
+    }));
+
+    const opts = {
+      fields: ['Nombre', 'Teléfono', 'Fecha', 'Cantidad de Personas', 'Tipo de Servicio'],
+      delimiter: ';',
+      utf8ByteOrderMark: true
+    };
+
+    const parser = new Parser(opts);
+    const csv = `${header}${parser.parse(csvData)}`;
+
+    res.setHeader('Content-Disposition', 'attachment; filename="reservas-ultimos-tres-meses.csv"');
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+
+    res.status(200).send(csv);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const obtenerReservasUltimoAnio = async (req, res) => {
+  try {
+    const fechaActual = dayjs();
+    const fechaInicioAnio = fechaActual.startOf('year'); // Comienzo del año actual
+    const fechaFinMesActual = fechaActual.endOf('month'); // Final del mes actual
+
+    // Obtener las reservas del último año ordenadas por fecha de creación descendente
+    const reservasUltimoAnio = await Reserva.find({
+      fecha: {
+        $gte: fechaInicioAnio.toDate(), // Desde el comienzo del año actual
+        $lte: fechaFinMesActual.toDate() // Hasta el final del mes actual
+      }
+    }).sort({ createdAt: -1 }); // Ordenar por fecha de creación descendente
+
+    const header = `Informe de Reservas del último año\nFecha de generación: ${dayjs().format('DD/MM/YYYY HH:mm')}\n\n`;
+
+    const csvData = reservasUltimoAnio.map(reserva => ({
+      Nombre: reserva.nombre,
+      Teléfono: reserva.telefono,
+      Fecha: dayjs(reserva.fecha).format('DD/MM/YYYY HH:mm'),
+      'Cantidad de Personas': reserva.cantidadPersonas,
+      'Tipo de Servicio': reserva.tipoServicio
+    }));
+
+    const opts = {
+      fields: ['Nombre', 'Teléfono', 'Fecha', 'Cantidad de Personas', 'Tipo de Servicio'],
+      delimiter: ';',
+      utf8ByteOrderMark: true
+    };
+
+    const parser = new Parser(opts);
+    const csv = `${header}${parser.parse(csvData)}`;
+
+    res.setHeader('Content-Disposition', 'attachment; filename="reservas-ultimo-anio.csv"');
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+
+    res.status(200).send(csv);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+
+
 module.exports = {
   obtenerReservas,
   crearReserva,
@@ -213,5 +415,9 @@ module.exports = {
   obtenerReservasUltimoMes, // Agregar esta función a las exportaciones
   obtenerCantidadReservas,
   obtenerReservasPorTipo,
-  obtenerTodasReservas
+  obtenerTodasReservas,
+  descargarReservasUltimoMes,
+  obtenerReservasUltimoAnio,
+  obtenerReservasUltimosTresMeses,
+  obtenerReservasPorDia
 };

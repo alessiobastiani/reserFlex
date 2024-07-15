@@ -6,9 +6,10 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Title from './Title';
 import Button from '@mui/material/Button';
-import { DatePicker, TimePicker } from '@mui/lab';
-import AdapterDateFns from '@mui/lab/AdapterDateFns';
-import LocalizationProvider from '@mui/lab/LocalizationProvider';
+import { TextField } from '@mui/material';
+import { FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const EditarReserva = () => {
   const [reservas, setReservas] = useState([]);
@@ -32,7 +33,9 @@ const EditarReserva = () => {
         }
 
         const data = await response.json();
-        setReservas(data.reservas);
+        // Ordenar las reservas de más nuevas a más viejas según la fecha de creación
+        const reservasOrdenadas = data.reservas.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        setReservas(reservasOrdenadas);
       } catch (error) {
         console.error(error);
       }
@@ -41,7 +44,7 @@ const EditarReserva = () => {
     fetchReservas();
   }, []);
 
-  const handleEdit = (index, newValue, field) => {
+  const handleEdit = (index, field, newValue) => {
     const newReservas = [...reservas];
     newReservas[index][field] = newValue;
     setReservas(newReservas);
@@ -69,12 +72,15 @@ const EditarReserva = () => {
         throw new Error('Error al actualizar la reserva');
       }
 
-      // Handle success
+      toast.success('¡Edición exitosa!');
     } catch (error) {
       console.error(error);
       // Handle error
     }
   };
+
+  // Filtrar las reservas para mostrar solo las que aún no han pasado su fecha
+  const reservasFiltradas = reservas.filter(reserva => new Date(reserva.fecha) >= new Date());
 
   return (
     <React.Fragment>
@@ -91,30 +97,47 @@ const EditarReserva = () => {
           </TableRow>
         </TableHead>
         <TableBody>
-          {reservas.map((reserva, index) => (
+          {reservasFiltradas.map((reserva, index) => (
             <TableRow key={reserva._id}>
               <TableCell>
-                <LocalizationProvider dateAdapter={AdapterDateFns}>
-                  <DatePicker
-                    label="Fecha"
-                    value={new Date(reserva.fecha)}
-                    onChange={(newValue) => handleEdit(index, newValue, 'fecha')}
-                    renderInput={(params) => <TextField {...params} />}
-                  />
-                </LocalizationProvider>
-                <LocalizationProvider dateAdapter={AdapterDateFns}>
-                  <TimePicker
-                    label="Hora"
-                    value={new Date(reserva.fecha)}
-                    onChange={(newValue) => handleEdit(index, newValue, 'fecha')}
-                    renderInput={(params) => <TextField {...params} />}
-                  />
-                </LocalizationProvider>
+                <TextField
+                  type="datetime-local"
+                  value={reserva.fecha}
+                  onChange={(e) => handleEdit(index, 'fecha', e.target.value)}
+                />
               </TableCell>
-              <TableCell contentEditable onBlur={(e) => handleEdit(index, e.target.innerText, 'nombre')}>{reserva.nombre}</TableCell>
-              <TableCell contentEditable onBlur={(e) => handleEdit(index, e.target.innerText, 'telefono')}>{reserva.telefono}</TableCell>
-              <TableCell contentEditable onBlur={(e) => handleEdit(index, e.target.innerText, 'cantidadPersonas')}>{reserva.cantidadPersonas}</TableCell>
-              <TableCell contentEditable onBlur={(e) => handleEdit(index, e.target.innerText, 'tipoServicio')}>{reserva.tipoServicio}</TableCell>
+              <TableCell>
+                <TextField
+                  value={reserva.nombre}
+                  onChange={(e) => handleEdit(index, 'nombre', e.target.value)}
+                />
+              </TableCell>
+              <TableCell>
+                <TextField
+                  value={reserva.telefono}
+                  onChange={(e) => handleEdit(index, 'telefono', e.target.value)}
+                />
+              </TableCell>
+              <TableCell>
+                <TextField
+                  type="number"
+                  value={reserva.cantidadPersonas}
+                  onChange={(e) => handleEdit(index, 'cantidadPersonas', e.target.value)}
+                />
+              </TableCell>
+              <TableCell>
+                <FormControl fullWidth>
+                  <Select
+                    value={reserva.tipoServicio}
+                    onChange={(e) => handleEdit(index, 'tipoServicio', e.target.value)}
+                  >
+                    <MenuItem value="Desayuno">Desayuno</MenuItem>
+                    <MenuItem value="Almuerzo">Almuerzo</MenuItem>
+                    <MenuItem value="Merienda">Merienda</MenuItem>
+                    <MenuItem value="Cena">Cena</MenuItem>
+                  </Select>
+                </FormControl>
+              </TableCell>
               <TableCell>
                 <Button onClick={() => handleSave(reserva._id)} variant="outlined" color="primary">Guardar</Button>
               </TableCell>
@@ -122,6 +145,7 @@ const EditarReserva = () => {
           ))}
         </TableBody>
       </Table>
+      <ToastContainer />
     </React.Fragment>
   );
 };

@@ -9,6 +9,7 @@ const authRouter = require('./routes/auth');
 const dashboardRouter = require('./routes/dashboard');
 const flash = require('express-flash');
 const ensureAuthenticated = require('./middleware/authMiddleware');
+const configuracionRoutes = require('./routes/configuracionRoutes');
 const debug = require('debug')('app:db');
 const dayjs = require('dayjs');
 const utc = require('dayjs/plugin/utc');
@@ -63,6 +64,7 @@ app.use('/api/reservas', ensureAuthenticated, reservaRouter);
 app.use('/api', reservaRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/admin', dashboardRouter);
+app.use('/configuracion', configuracionRoutes);
 
 app.listen(PORT, () => {
   console.log(`Servidor en ejecución en http://localhost:${PORT}`);

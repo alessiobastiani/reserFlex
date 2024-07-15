@@ -1,3 +1,5 @@
+//reservas.js
+
 const express = require('express');
 const router = express.Router();
 const ensureAuthenticated = require('../middleware/authMiddleware');
@@ -17,5 +19,15 @@ router.get('/reservas-por-tipo', ensureAuthenticated, reservaController.obtenerR
 
 // Nueva ruta para obtener todas las reservas
 router.get('/allReservas', ensureAuthenticated, reservaController.obtenerTodasReservas);
+
+// Nueva ruta para descargar las reservas del último mes en formato CSV
+router.get('/descargar-reservas-ultimo-mes', ensureAuthenticated, reservaController.descargarReservasUltimoMes);
+
+// Nueva ruta para obtener las reservas de los últimos tres meses
+router.get('/reservas-ultimos-tres-meses', ensureAuthenticated, reservaController.obtenerReservasUltimosTresMeses);
+
+// Nueva ruta para obtener las reservas del último año
+router.get('/reservas-ultimo-anio', ensureAuthenticated, reservaController.obtenerReservasUltimoAnio);
+
 
 module.exports = router;

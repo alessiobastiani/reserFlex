@@ -17,7 +17,6 @@ import Link from '@mui/material/Link';
 import MenuIcon from '@mui/icons-material/Menu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import NotificationsIcon from '@mui/icons-material/Notifications';
-import DashboardIcon from '@mui/icons-material/Dashboard';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
@@ -33,6 +32,14 @@ import PeopleIcon from '@mui/icons-material/People';
 import ClientCard from './ClientCard';
 import Calendario from './Calendario';
 import EditarReserva from './EditarReserva';
+import TodasReservas from './TodasReservas';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import EditIcon from '@mui/icons-material/Edit';
+import EventAvailableIcon from '@mui/icons-material/EventAvailable';
+import LimitConfig from './LimitConfig';
+
+
 
 const drawerWidth = 240;
 
@@ -149,7 +156,12 @@ export default function Dashboard() {
     content = <Calendario />;
   }else if (selectedOption === 'EditarReserva') {
     content = <EditarReserva />;
+  } else if (selectedOption === 'TodasReservas'){
+    content = <TodasReservas/>
+  }else if (selectedOption === 'LimitConfig') {
+    content = <LimitConfig />;
   }
+  
 
   return (
     <ThemeProvider theme={defaultTheme}>
@@ -173,20 +185,18 @@ export default function Dashboard() {
             >
               <MenuIcon />
             </IconButton>
-            <Typography
-              component="h1"
-              variant="h6"
-              color="inherit"
-              noWrap
-              sx={{ flexGrow: 1 }}
+          <Typography
+            component="h1"
+            variant="h5"
+            color="inherit"
+            noWrap
+            sx={{
+             flexGrow: 1,
+              fontFamily: 'cursive', // Cambiar a la fuente que desees
+           }}
             >
-              reserFlex
+            reserFlex
             </Typography>
-            <IconButton color="inherit">
-              <Badge badgeContent={4} color="secondary">
-                <NotificationsIcon />
-              </Badge>
-            </IconButton>
           </Toolbar>
         </AppBar>
         <Drawer variant="permanent" open={open}>
@@ -204,45 +214,57 @@ export default function Dashboard() {
           </Toolbar>
           <Divider />
           <List component="nav">
-            {/* Elementos del menú lateral */}
-            <ListItemButton onClick={() => handleOptionClick('Dashboard')}>
-              <ListItemIcon>
-                <DashboardIcon />
-              </ListItemIcon>
-              <ListItemText primary="Dashboard" />
-            </ListItemButton>
-            <ListItemButton onClick={() => handleOptionClick('ReservasHoy')}>
-              <ListItemIcon>
-                <ShoppingCartIcon />
-              </ListItemIcon>
-              <ListItemText primary="Reservas de hoy" />
-            </ListItemButton>
-            <ListItemButton onClick={() => handleOptionClick('Clientes')}>
-              <ListItemIcon>
-                <PeopleIcon />
-              </ListItemIcon>
-              <ListItemText primary="Clientes" />
-            </ListItemButton>
-            <ListItemButton onClick={() => handleOptionClick('Calendario')}>
-              <ListItemIcon>
-                <PeopleIcon />
-              </ListItemIcon>
-              <ListItemText primary="Calendario" />
-            </ListItemButton>
-            <ListItemButton onClick={() => handleOptionClick('EditarReserva')}>
-            <ListItemIcon>
-              <PeopleIcon />
-            </ListItemIcon>
-            <ListItemText primary="Editar reservas" />
-          </ListItemButton> 
-            <ListItemButton onClick={handleLogout}>
-              <ListItemIcon>
-                <ExitToAppIcon />
-              </ListItemIcon>
-              <ListItemText primary="Cerrar sesión" />
-            </ListItemButton>
-            {secondaryListItems}
-          </List>
+  {/* Elementos del menú lateral */}
+  <ListItemButton onClick={() => handleOptionClick('Dashboard')}>
+    <ListItemIcon>
+      <DashboardIcon />
+    </ListItemIcon>
+    <ListItemText primary="Dashboard" />
+  </ListItemButton>
+  <ListItemButton onClick={() => handleOptionClick('ReservasHoy')}>
+    <ListItemIcon>
+      <ShoppingCartIcon />
+    </ListItemIcon>
+    <ListItemText primary="Reservas de hoy" />
+  </ListItemButton>
+  <ListItemButton onClick={() => handleOptionClick('TodasReservas')}>
+    <ListItemIcon>
+    <EventAvailableIcon />
+    </ListItemIcon>
+    <ListItemText primary="Todas las reservas" />
+  </ListItemButton>
+  <ListItemButton onClick={() => handleOptionClick('Clientes')}>
+    <ListItemIcon>
+      <PeopleIcon />
+    </ListItemIcon>
+    <ListItemText primary="Clientes" />
+  </ListItemButton>
+  <ListItemButton onClick={() => handleOptionClick('Calendario')}>
+    <ListItemIcon>
+      <CalendarTodayIcon />
+    </ListItemIcon>
+    <ListItemText primary="Calendario" />
+  </ListItemButton>
+  <ListItemButton onClick={() => handleOptionClick('EditarReserva')}>
+    <ListItemIcon>
+      <EditIcon />
+    </ListItemIcon>
+    <ListItemText primary="Editar reservas" />
+  </ListItemButton> 
+  <ListItemButton onClick={() => handleOptionClick('LimitConfig')}>
+    <ListItemIcon>
+      <EditIcon />
+    </ListItemIcon>
+    <ListItemText primary="Configuracion" />
+  </ListItemButton> 
+  <ListItemButton onClick={handleLogout}>
+    <ListItemIcon>
+      <ExitToAppIcon />
+    </ListItemIcon>
+    <ListItemText primary="Cerrar sesión" />
+  </ListItemButton>
+  {secondaryListItems}
+</List>
         </Drawer>
         <Box
           component="main"

@@ -5,6 +5,8 @@ import Home from './components/Home';
 import AdminPanel from './components/AdminPanel';
 import Signup from './components/signup';
 import UltimaReservaPage from './components/UltimaReservaPage';
+import { ThemeProvider, createTheme } from '@mui/material/styles'; // Verifica esta línea
+import getLPTheme from './components/GetLPTheme';
 
 const App = () => {
   // Define userId utilizando useState o cualquier otro método
@@ -18,16 +20,21 @@ const App = () => {
     }
   }, []);
 
+  const theme = createTheme(getLPTheme('light')); // O 'dark' para el modo oscuro
+
+
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/inicio" element={<Home />} />
-        <Route path="/admin/panel" element={<AdminPanel />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/ultima-reserva" element={<UltimaReservaPage userId={userId} />} />
-      </Routes>
-    </Router>
+    <ThemeProvider theme={theme}>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Login />} />
+          <Route path="/inicio" element={<Home />} />
+          <Route path="/admin/panel" element={<AdminPanel />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/ultima-reserva" element={<UltimaReservaPage userId={userId} />} />
+        </Routes>
+      </Router>
+    </ThemeProvider>
   );
 };
 

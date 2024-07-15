@@ -1,4 +1,5 @@
 import React from 'react';
+import Button from '@mui/material/Button';
 
 const Logout = () => {
   const handleLogout = () => {
@@ -8,7 +9,20 @@ const Logout = () => {
   };
 
   return (
-    <button className='btn btn-dark ' onClick={handleLogout}>Cerrar sesión</button>
+    <Button
+      variant="text"
+      onClick={handleLogout}
+      sx={{
+        textDecoration: 'none',
+        fontSize: '13px',
+        fontWeight: 'normal',
+        '&:hover': {
+          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+        },
+      }}
+    >
+      Cerrar sesión
+    </Button>
   );
 };
 

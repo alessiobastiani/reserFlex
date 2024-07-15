@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Targeta from './Targeta';
-
 import Navbar1 from './Navbar1';
+import Button from '@mui/material/Button';
+
 
 const UltimaReservaPage = () => {
   const [ultimaReserva, setUltimaReserva] = useState(null);

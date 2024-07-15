@@ -12,9 +12,9 @@ const CurrentDateTime = () => {
   }, []);
 
   return (
-    <div>
-      <h2>Fecha y hora actual:</h2>
-      <p>{currentDateTime.toLocaleString()}</p>
+    <div style={{ marginBottom: '20px', marginTop: '100px' }}>
+      <h2 style={{ marginBottom: '10px', marginTop: '0px' }}>Fecha y hora actual:</h2>
+      <p style={{ marginBottom: '0px', marginTop: '0px' }}>{currentDateTime.toLocaleString()}</p>
     </div>
   );
 };
