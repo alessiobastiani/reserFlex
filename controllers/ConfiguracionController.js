@@ -2,11 +2,11 @@ const Configuracion = require('../models/Configuracion');
 
 const actualizarConfiguracion = async (req, res) => {
   try {
-    if (!req.user.isAdmin) {
+    if (req.user.role !== 'admin') {
       return res.status(403).json({ message: 'No tienes permiso para realizar esta acción' });
     }
 
-    const { limiteReservasPorDia, tiempoAnticipacionReservas, horarios } = req.body; // Agregar 'horarios' aquí
+    const { limiteReservasPorDia, tiempoAnticipacionReservas, horarios, fechasCerradas } = req.body;
 
     if (isNaN(limiteReservasPorDia) || limiteReservasPorDia < 0) {
       return res.status(400).json({ message: 'El límite de reservas por día debe ser un número positivo' });
@@ -16,9 +16,17 @@ const actualizarConfiguracion = async (req, res) => {
       return res.status(400).json({ message: 'El tiempo de anticipación debe ser un número positivo' });
     }
 
+    // Convertir las fechas a objetos Date
+    const fechasCerradasDates = fechasCerradas.map(fecha => new Date(fecha));
+
     const configuracion = await Configuracion.findOneAndUpdate(
       {},
-      { limiteReservasPorDia, tiempoAnticipacionReservas, horarios }, // Aquí asegúrate de incluir 'horarios'
+      {
+        limiteReservasPorDia,
+        tiempoAnticipacionReservas,
+        horarios,
+        fechasCerradas: fechasCerradasDates // Actualizar con fechas convertidas
+      },
       { new: true, upsert: true }
     );
 
@@ -28,6 +36,28 @@ const actualizarConfiguracion = async (req, res) => {
     res.status(500).json({ message: 'Ocurrió un error al actualizar la configuración' });
   }
 };
+
+
+const obtenerFechasCerradas = async (req, res) => {
+  try {
+    const configuracion = await Configuracion.findOne();
+
+    if (!configuracion) {
+      return res.status(404).json({ message: 'No se encontró configuración' });
+    }
+
+    if (!configuracion.fechasCerradas || configuracion.fechasCerradas.length === 0) {
+      return res.status(404).json({ message: 'No se encontraron fechas cerradas en la configuración' });
+    }
+
+    res.status(200).json({ fechasCerradas: configuracion.fechasCerradas });
+  } catch (error) {
+    console.error('Error al obtener las fechas cerradas:', error);
+    res.status(500).json({ message: 'Ocurrió un error al obtener las fechas cerradas' });
+  }
+};
+
+
 
 
 const obtenerLimiteReservas = async (req, res) => {
@@ -74,11 +104,37 @@ const obtenerHorarios = async (req, res) => {
   }
 };
 
+const eliminarFechaCerrada = async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'No tienes permiso para realizar esta acción' });
+    }
+
+    const { date } = req.params;
+
+    const configuracion = await Configuracion.findOneAndUpdate(
+      {},
+      { $pull: { fechasCerradas: new Date(date) } },
+      { new: true }
+    );
+
+    if (!configuracion) {
+      return res.status(404).json({ message: 'Configuración no encontrada' });
+    }
+
+    res.status(200).json({ message: 'Fecha cerrada eliminada correctamente' });
+  } catch (error) {
+    console.error('Error al eliminar la fecha cerrada:', error);
+    res.status(500).json({ message: 'Ocurrió un error al eliminar la fecha cerrada' });
+  }
+};
 
 module.exports = {
   actualizarConfiguracion,
   obtenerLimiteReservas,
   obtenerTiempoAnticipacion,
-  obtenerHorarios // Add this function to exports
+  obtenerHorarios,
+  obtenerFechasCerradas,
+  eliminarFechaCerrada
 };
 

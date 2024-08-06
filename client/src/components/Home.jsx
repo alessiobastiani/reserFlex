@@ -8,21 +8,10 @@ import ReservaForm from './ReservaForm';
 import Navbar1 from './Navbar1';
 import CurrentDateTime from './CurrentDateTime';
 import Footer from './Footer1';
-
+import Hero from './Hero'; // Importa el componente Hero
+import { getLPTheme } from './themeConfig'; // Importa la función para crear el tema
 
 dayjs.locale('es');
-
-const getLPTheme = (mode) => ({
-  palette: {
-    mode,
-    primary: { main: '#1976d2' },
-    secondary: { main: '#dc004e' },
-  },
-  typography: {
-    h1: { fontSize: '2.5rem', margin: '20px 0' },
-    body1: { fontSize: '1.2rem', margin: '10px 0' },
-  },
-});
 
 const ToggleCustomTheme = ({ showCustomTheme, toggleCustomTheme }) => (
   <Box
@@ -40,7 +29,7 @@ const ToggleCustomTheme = ({ showCustomTheme, toggleCustomTheme }) => (
 
 const Home = () => {
   const [mode, setMode] = useState('light');
-  const [showCustomTheme, setShowCustomTheme] = useState(false); // Cambiado a false para usar solo Material Design
+  const [showCustomTheme, setShowCustomTheme] = useState(false);
   const [ultimaReserva, setUltimaReserva] = useState(null);
   const [userId, setUserId] = useState(null);
 
@@ -74,7 +63,7 @@ const Home = () => {
           const token = localStorage.getItem('token');
           const response = await fetch(`http://localhost:3001/api/reservas/latest/${userId}`, {
             headers: {
-              'Authorization': `Bearer ${token}`,
+              Authorization: `Bearer ${token}`,
             },
           });
 
@@ -118,7 +107,7 @@ const Home = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(reservaData),
       });
@@ -152,7 +141,8 @@ const Home = () => {
     <ThemeProvider theme={showCustomTheme ? LPtheme : defaultTheme}>
       <CssBaseline />
       <Navbar1 mode={mode} toggleColorMode={toggleColorMode} />
-      <Box sx={{ bgcolor: 'background.default', textAlign: 'center', marginTop: '60px' }}>
+      <Hero /> {/* Agrega el componente Hero después del Navbar */}
+      <Box sx={{ bgcolor: 'background.default', textAlign: 'center'}}>
         <CurrentDateTime />
         <ReservaForm onReservaSubmit={handleReservaSubmit} />
         <Footer />

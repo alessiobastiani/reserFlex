@@ -15,5 +15,10 @@ router.get('/anticipacion', ensureAuthenticated, configuracionController.obtener
 // Ruta para obtener los horarios de los servicios
 router.get('/horarios', ensureAuthenticated, configuracionController.obtenerHorarios);
 
+// Ruta para obtener las fechas cerradas
+router.get('/fechasCerradas', ensureAuthenticated, configuracionController.obtenerFechasCerradas);
+
+// Ruta para eliminar una fecha cerrada
+router.delete('/fechasCerradas/:date', ensureAuthenticated, configuracionController.eliminarFechaCerrada);
 
 module.exports = router;

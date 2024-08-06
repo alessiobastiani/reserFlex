@@ -8,9 +8,9 @@ const configuracionSchema = new mongoose.Schema({
     merienda: { inicio: String, fin: String },
     almuerzo: { inicio: String, fin: String },
     cena: { inicio: String, fin: String }
-  }
+  },
+  fechasCerradas: { type: [Date], default: [] } // Cambiado de diasCerrados a fechasCerradas
 });
-
 
 const Configuracion = mongoose.model('Configuracion', configuracionSchema);
 

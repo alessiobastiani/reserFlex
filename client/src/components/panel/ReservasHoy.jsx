@@ -51,7 +51,7 @@ const ReservasHoy = () => {
           {reservas && reservas.length > 0 ? (
             reservas.map((reserva) => (
               <Grid item xs={12} sm={6} md={4} key={reserva._id}>
-                <Card style={{ boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.1)', borderRadius: '8px', backgroundColor: '#fff' }}>
+                <Card style={{ boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.1)', borderRadius: '8px' }}>
                   <CardContent>
                     <Typography variant="h6" component="div">
                       {reserva.nombre}

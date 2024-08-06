@@ -10,13 +10,16 @@ const dashboardRouter = require('./routes/dashboard');
 const flash = require('express-flash');
 const ensureAuthenticated = require('./middleware/authMiddleware');
 const configuracionRoutes = require('./routes/configuracionRoutes');
+const notificacionesRoutes = require('./routes/notificacionesRoutes');
+const menuRoutes = require('./routes/MenuRoutes'); // Importa las rutas de menú
+const path = require('path'); // Importa el módulo path
+
 const debug = require('debug')('app:db');
 const dayjs = require('dayjs');
 const utc = require('dayjs/plugin/utc');
 const timezone = require('dayjs/plugin/timezone');
 process.env.TZ = 'America/Argentina/Buenos_Aires';
 require('dotenv').config();
-
 
 // Importar los plugins de UTC y zona horaria de dayjs
 dayjs.extend(utc);
@@ -61,13 +64,17 @@ passportConfig(); // Llama a la función de configuración de Passport.js
 // Middleware para proteger las rutas de reserva
 app.use('/api/reservas', ensureAuthenticated, reservaRouter);
 
+// Rutas de menú
+app.use('/api/menus', menuRoutes); // Añade esta línea para las rutas de menú
+
 app.use('/api', reservaRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/admin', dashboardRouter);
 app.use('/configuracion', configuracionRoutes);
+app.use('/api/notifications', notificacionesRoutes);
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.listen(PORT, () => {
   console.log(`Servidor en ejecución en http://localhost:${PORT}`);
 });
-
 

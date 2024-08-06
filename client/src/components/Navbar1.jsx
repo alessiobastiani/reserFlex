@@ -7,14 +7,12 @@ import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
 import Container from '@mui/material/Container';
 import Divider from '@mui/material/Divider';
-import Typography from '@mui/material/Typography';
 import MenuItem from '@mui/material/MenuItem';
 import Drawer from '@mui/material/Drawer';
 import MenuIcon from '@mui/icons-material/Menu';
-import ToggleColorMode from './ToggleColorMode'; // Adjust the import if necessary
-import reser from  '../assets/reser.png'
+import ToggleColorMode from './ToggleColorMode';
+import reser from '../assets/reser.png';
 import Button from '@mui/material/Button';
-
 
 const logoStyle = {
   width: '140px',
@@ -27,20 +25,6 @@ function Navbar1({ mode, toggleColorMode }) {
 
   const toggleDrawer = (newOpen) => () => {
     setOpen(newOpen);
-  };
-
-  const scrollToSection = (sectionId) => {
-    const sectionElement = document.getElementById(sectionId);
-    const offset = 128;
-    if (sectionElement) {
-      const targetScroll = sectionElement.offsetTop - offset;
-      sectionElement.scrollIntoView({ behavior: 'smooth' });
-      window.scrollTo({
-        top: targetScroll,
-        behavior: 'smooth',
-      });
-      setOpen(false);
-    }
   };
 
   return (
@@ -87,14 +71,10 @@ function Navbar1({ mode, toggleColorMode }) {
               }}
             >
               <Link to="/inicio" style={{ textDecoration: 'none', color: 'inherit' }}>
-                <img
-                  src={reser}
-                  style={logoStyle}
-                  alt="logo of sitemark"
-                />
+                <img src={reser} style={logoStyle} alt="logo of sitemark" />
               </Link>
               <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
-              <Button
+                <Button
                   component={Link}
                   to="/ultima-reserva"
                   variant="text"
@@ -108,6 +88,22 @@ function Navbar1({ mode, toggleColorMode }) {
                   }}
                 >
                   Última Reserva
+                </Button>
+                {/* Enlace al menú */}
+                <Button
+                  component={Link}
+                  to="/menu"
+                  variant="text"
+                  sx={{
+                    textDecoration: 'none',
+                    fontSize: '13px',
+                    fontWeight: 'normal',
+                    '&:hover': {
+                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    },
+                  }}
+                >
+                  Menú
                 </Button>
               </Box>
             </Box>
@@ -151,18 +147,27 @@ function Navbar1({ mode, toggleColorMode }) {
                     <ToggleColorMode mode={mode} toggleColorMode={toggleColorMode} />
                   </Box>
                   <Button
-                  component={Link}
-                  to="/ultima-reserva"
-                  sx={{
-                    textDecoration: 'none',
-                    fontSize: '13px',
-                    fontWeight: 'normal',
-                    '&:hover': {
-                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                    },
-                  }}
-                >
-                  ultima reserva
+                    component={Link}
+                    to="/ultima-reserva"
+                    sx={{
+                      textDecoration: 'none',
+                      fontSize: '13px',
+                      fontWeight: 'normal',
+                    }}
+                  >
+                    Última Reserva
+                  </Button>
+                  <Divider />
+                  <Button
+                    component={Link}
+                    to="/menu"
+                    sx={{
+                      textDecoration: 'none',
+                      fontSize: '13px',
+                      fontWeight: 'normal',
+                    }}
+                  >
+                    Menú
                   </Button>
                   <Divider />
                   <MenuItem>

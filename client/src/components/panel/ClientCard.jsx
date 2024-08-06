@@ -48,7 +48,8 @@ const ClientCard = () => {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell><b>Nombre</b></TableCell>
+                <TableCell><b>Nombre de Usuario</b></TableCell>
+                <TableCell><b>Nombre Completo</b></TableCell>
                 <TableCell><b>Teléfono</b></TableCell>
                 <TableCell><b>Email</b></TableCell>
               </TableRow>
@@ -57,6 +58,7 @@ const ClientCard = () => {
               {clients.map((client, index) => (
                 <TableRow key={index}>
                   <TableCell>{client.username}</TableCell>
+                  <TableCell>{client.fullName}</TableCell>
                   <TableCell>{client.phone}</TableCell>
                   <TableCell>{client.email}</TableCell>
                 </TableRow>

@@ -5,65 +5,62 @@ const secretKey = 'tu_secreto_jwt_aqui';
 
 const signup = async (req, res) => {
   try {
-    const { username, password, email, phone } = req.body; // Asegúrate de obtener también el campo `phone`
+    const { fullName, username, password, email, phone } = req.body;
     const adminUsername = process.env.ADMIN_USERNAME;
     const adminPassword = process.env.ADMIN_PASSWORD;
+    const supervisorUsername = process.env.SUPERVISOR_USERNAME;
+    const supervisorPassword = process.env.SUPERVISOR_PASSWORD;
 
-    // Verificar si el usuario que se registra es un administrador
+    let role = 'user';
+
+    // Verificar si el usuario que se registra es un administrador o supervisor
     if (username === adminUsername && password === adminPassword) {
-      // Crear un nuevo usuario administrador
-      const newUser = new User({ username, password, email, phone, isAdmin: true, isAuthorized: true }); // Agrega `phone` aquí
-      const salt = await bcrypt.genSalt(10);
-      newUser.password = await bcrypt.hash(password, salt);
-      await newUser.save();
-
-      // Crear token JWT para el nuevo usuario administrador
-      const token = jwt.sign({ id: newUser._id, isAdmin: true }, secretKey);
-      return res.json({ message: 'Registro exitoso como administrador', token });
-    } else {
-      // Crear un nuevo usuario regular
-      const newUser = new User({ username, password, email, phone, isAuthorized: true }); // Agrega `phone` aquí
-      const salt = await bcrypt.genSalt(10);
-      newUser.password = await bcrypt.hash(password, salt);
-      await newUser.save();
-
-      // Crear token JWT para el nuevo usuario regular
-      const token = jwt.sign({ id: newUser._id, isAdmin: false }, secretKey);
-      return res.json({ message: 'Registro exitoso', token });
+      role = 'admin';
+    } else if (username === supervisorUsername && password === supervisorPassword) {
+      role = 'supervisor';
     }
+
+    // Crear un nuevo usuario
+    const newUser = new User({ fullName, username, password, email, phone, role, isAuthorized: true });
+    const salt = await bcrypt.genSalt(10);
+    newUser.password = await bcrypt.hash(password, salt);
+    await newUser.save();
+
+    // Crear token JWT para el nuevo usuario
+    const token = jwt.sign({ id: newUser._id, role }, secretKey);
+    return res.json({ message: `Registro exitoso como ${role}`, token });
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
 };
 
+
 const login = async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const { identifier, password } = req.body;
 
-    // Buscar el usuario en la base de datos
-    const user = await User.findOne({ username });
+    // Buscar el usuario por nombre de usuario o correo electrónico
+    const user = await User.findOne({ $or: [{ username: identifier }, { email: identifier }] });
     if (!user) {
-      return res.status(401).json({ message: 'Nombre de usuario o contraseña incorrectos' });
+      return res.status(401).json({ message: 'Nombre de usuario o correo electrónico incorrectos' });
     }
 
     // Verificar la contraseña
     const validPassword = await bcrypt.compare(password, user.password);
     if (!validPassword) {
-      return res.status(401).json({ message: 'Nombre de usuario o contraseña incorrectos' });
+      return res.status(401).json({ message: 'Contraseña incorrecta' });
     }
 
-    // Configurar isAdmin en true si el usuario es un administrador
-    const isAdmin = user.isAdmin; // O utiliza algún otro atributo que indique si el usuario es un administrador
+    // Generar token JWT incluyendo el rol
+    const token = jwt.sign({ id: user.id, role: user.role }, secretKey, { expiresIn: '1h' });
 
-    // Generar token JWT incluyendo isAdmin
-    const token = jwt.sign({ id: user.id, isAdmin }, secretKey, { expiresIn: '1h' });
-
-    // Devolver el token y el estado de administrador en la respuesta
-    return res.json({ message: 'Inicio de sesión exitoso', token, isAdmin });
+    // Devolver el token y el rol en la respuesta
+    return res.json({ message: 'Inicio de sesión exitoso', token, role: user.role });
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
 };
+
 
 const getUsers = async (req, res) => {
   try {
@@ -76,7 +73,6 @@ const getUsers = async (req, res) => {
   }
 };
 
-
 const logout = (req, res) => {
   req.logout();
   res.json({ message: 'Cierre de sesión exitoso' });
@@ -86,5 +82,5 @@ module.exports = {
   signup,
   login,
   logout,
-  getUsers
+  getUsers,
 };

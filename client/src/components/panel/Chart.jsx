@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { useTheme } from '@mui/material/styles';
 import { LineChart, axisClasses } from '@mui/x-charts';
-import dayjs from 'dayjs'; // Importar dayjs para manipulación de fechas
-import es from 'dayjs/locale/es'; // Importar la localización en español de dayjs
+import dayjs from 'dayjs';
+import es from 'dayjs/locale/es';
 import Title from './Title';
 
 // Establecer la localización en español para dayjs
@@ -123,10 +123,18 @@ export default function Chart() {
             [`& .${axisClasses.left} .${axisClasses.label}`]: {
               transform: 'translateX(-25px)',
             },
+            [`& .${axisClasses.tick} line`]: {
+              stroke: theme.palette.text.secondary,
+            },
+            [`& .${axisClasses.tick} text`]: {
+              fill: theme.palette.text.secondary,
+            },
+            [`& .${axisClasses.axis} line`]: {
+              stroke: theme.palette.divider,
+            },
           }}
         />
       </div>
     </React.Fragment>
   );
 }
-

@@ -1,5 +1,3 @@
-//reserform
-
 import React, { useState, useEffect } from 'react';
 import dayjs from 'dayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -11,7 +9,7 @@ import FormControl from '@mui/material/FormControl';
 import Select from '@mui/material/Select';
 import InputLabel from '@mui/material/InputLabel';
 import { Button, Card } from 'react-bootstrap';
-import reserva from "../assets/reserva.jpg";
+import reserva from "../assets/reservado.png";
 import { PDFDownloadLink, Document, Page, Text, StyleSheet, View, Image } from '@react-pdf/renderer';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -23,7 +21,6 @@ import { ThemeProvider, createTheme } from '@mui/material/styles'; // Importa Th
 import getLPTheme from './GetLPTheme';
 
 const theme = createTheme(getLPTheme('light')); // Puedes ajustar el modo según tus necesidades ('light' o 'dark')
-
 
 // Estilos para el PDF
 const styles = StyleSheet.create({
@@ -75,8 +72,6 @@ const styles = StyleSheet.create({
   },
 });
 
-
-
 const ReservaPDF = ({ reserva }) => (
   <Document>
     <Page size="A6" style={styles.page}>
@@ -106,6 +101,39 @@ const ReservaForm = ({ onReservaSubmit }) => {
   const [loading, setLoading] = useState(false);
   const [tiempoAnticipacion, setTiempoAnticipacion] = useState(null);
   const [horarios, setHorarios] = useState({});
+  const [fechasCerradas, setFechasCerradas] = useState([]); // Estado para las fechas cerradas
+  const [showAlert, setShowAlert] = useState(true); // Agregar el estado showAlert
+
+  useEffect(() => {
+    const fetchFechasCerradas = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          throw new Error('No se encontró un token de acceso');
+        }
+
+        const response = await fetch('http://localhost:3001/configuracion/fechasCerradas', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Error al obtener las fechas cerradas');
+        }
+
+        const data = await response.json();
+        setFechasCerradas(data.fechasCerradas);
+      } catch (error) {
+        console.error('Error al obtener las fechas cerradas:', error);
+        toast.error('Error al obtener las fechas cerradas');
+      }
+    };
+
+    fetchFechasCerradas();
+  }, []);
 
   useEffect(() => {
     const fetchLimiteReservas = async () => {
@@ -239,6 +267,13 @@ const ReservaForm = ({ onReservaSubmit }) => {
         return;
       }
   
+      // Validar si la fecha seleccionada está en las fechas cerradas
+      if (fechasCerradas.some(fechaCerrada => dayjs(fecha).isSame(dayjs(fechaCerrada), 'day'))) {
+        setError(' Esta fecha esta cerrado :(');
+        setLoading(false);
+        return;
+      }
+  
       if (tiempoAnticipacion !== null) {
         const horaAnticipacionMinima = fechaActual.add(tiempoAnticipacion, 'hour');
         if (dayjs(fecha).isBefore(horaAnticipacionMinima)) {
@@ -293,7 +328,7 @@ const ReservaForm = ({ onReservaSubmit }) => {
       console.error('Error al crear la reserva:', error);
   
       if (error.message === 'Límite de reservas alcanzado') {
-        toast.error('no hay mas lugar :(');
+        toast.error('No hay más lugar :(');
       } else {
         toast.error('No se pudo crear la reserva');
       }
@@ -305,6 +340,12 @@ const ReservaForm = ({ onReservaSubmit }) => {
   };
   
 
+  const handleAlertClose = () => {
+    setShowAlert(false);
+  };
+  
+  
+
   return (
     <div className="vh-100 d-flex justify-content-center align-items-center">
       <ToastContainer />
@@ -313,13 +354,18 @@ const ReservaForm = ({ onReservaSubmit }) => {
       ) : (
         <div className="w-100 d-flex justify-content-center align-items-center flex-column">
           {/* Alerta de Anticipación */}
-          <AnticipacionAlert tiempoAnticipacion={tiempoAnticipacion} />
+          {showAlert && (
+            <AnticipacionAlert
+              tiempoAnticipacion={tiempoAnticipacion}
+              onClose={handleAlertClose}
+            />
+          )}
           {/* Formulario */}
           <div
-            className={`p-4 rounded shadow ${reservaGuardada ? 'd-none' : ''}`}
-            style={{ maxWidth: '400px', margin: '20px' }}
+            className={`p-4 mb-5 rounded shadow ${reservaGuardada ? 'd-none' : ''}`}
+            style={{ maxWidth: '420px', margin: '20px' }}
             >
-            <h2 className="text-center mb-4">Crear reserva</h2>
+            <h2 className="text-center mb-4 mt-4">CREAR RESERVA</h2>
             <form onSubmit={handleSubmit}>
               <TextField
                 id="nombre"
@@ -366,7 +412,7 @@ const ReservaForm = ({ onReservaSubmit }) => {
                   <MenuItem value="Cena">Cena</MenuItem>
                 </Select>
               </FormControl>
-              <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <LocalizationProvider dateAdapter={AdapterDayjs} >
                 <DateTimePicker
                   label="Fecha y Hora"
                   value={fecha}

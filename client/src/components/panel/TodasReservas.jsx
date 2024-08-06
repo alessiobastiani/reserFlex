@@ -14,8 +14,6 @@ import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import { format } from 'date-fns';
 
-import Title from './Title';
-
 const StyledCard = ({ children }) => (
   <Card style={{ padding: '20px', boxShadow: '0 4px 8px 0 rgba(0,0,0,0.2)', borderRadius: '10px' }}>
     <CardContent>{children}</CardContent>
@@ -33,7 +31,7 @@ function AllReservations() {
   const serviceOptions = ['Cena', 'Almuerzo', 'Merienda', 'Desayuno'];
 
   const years = Array.from({ length: 6 }, (_, i) => String(new Date().getFullYear() - i));
-  const days = Array.from({ length: 31 }, (_, i) => String(i + 1));
+  const days = Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, '0')); // Asegurarse de que el día tenga dos dígitos
 
   const monthNamesSpanish = {
     '01': 'Enero',
@@ -54,7 +52,6 @@ function AllReservations() {
     const fetchReservations = async () => {
       try {
         const token = localStorage.getItem('token');
-
         if (!token) {
           throw new Error('No se encontró un token de acceso');
         }
@@ -70,8 +67,6 @@ function AllReservations() {
         }
 
         const data = await response.json();
-        
-        // Ordenar las reservas por fecha de más reciente a más antigua
         const sortedReservations = data.reservas.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
         setReservations(sortedReservations);
         setFilteredReservations(sortedReservations);
@@ -86,20 +81,19 @@ function AllReservations() {
   useEffect(() => {
     let filteredData = reservations;
 
-    if (filterService !== '') {
-      const lowercaseService = filterService.toLowerCase();
-      filteredData = filteredData.filter(reservation => reservation.tipoServicio.toLowerCase() === lowercaseService);
+    if (filterService) {
+      filteredData = filteredData.filter(reservation => reservation.tipoServicio.toLowerCase() === filterService.toLowerCase());
     }
 
-    if (filterYear !== '') {
+    if (filterYear) {
       filteredData = filteredData.filter(reservation => format(new Date(reservation.fecha), 'yyyy') === filterYear);
     }
 
-    if (filterMonth !== '') {
+    if (filterMonth) {
       filteredData = filteredData.filter(reservation => format(new Date(reservation.fecha), 'MM') === filterMonth);
     }
 
-    if (filterDay !== '') {
+    if (filterDay) {
       filteredData = filteredData.filter(reservation => format(new Date(reservation.fecha), 'dd') === filterDay);
     }
 
@@ -130,7 +124,7 @@ function AllReservations() {
       <Typography className='mb-3' variant="h9" component="div">
         Filtrar las reservas
       </Typography>
-      <FormControl variant="outlined" style={{ marginBottom: '24px',marginRight: '20px', minWidth: 150 }}>
+      <FormControl variant="outlined" style={{ marginBottom: '24px', marginRight: '20px', minWidth: 150 }}>
         <InputLabel id="service-filter-label">Tipo Servicio</InputLabel>
         <Select
           labelId="service-filter-label"
@@ -149,7 +143,7 @@ function AllReservations() {
           ))}
         </Select>
       </FormControl>
-      <FormControl variant="outlined" style={{ marginBottom: '24px',marginRight: '5px', minWidth: 150 }}>
+      <FormControl variant="outlined" style={{ marginBottom: '24px', marginRight: '5px', minWidth: 150 }}>
         <InputLabel id="year-filter-label">Año</InputLabel>
         <Select
           labelId="year-filter-label"
@@ -168,7 +162,7 @@ function AllReservations() {
           ))}
         </Select>
       </FormControl>
-      <FormControl variant="outlined" style={{ marginBottom: '24px',marginRight: '5px', minWidth: 150 }}>
+      <FormControl variant="outlined" style={{ marginBottom: '24px', marginRight: '5px', minWidth: 150 }}>
         <InputLabel id="month-filter-label">Mes</InputLabel>
         <Select
           labelId="month-filter-label"
@@ -187,7 +181,7 @@ function AllReservations() {
           ))}
         </Select>
       </FormControl>
-      <FormControl variant="outlined" style={{ marginBottom: '24px',marginRight: '5px', minWidth: 150 }}>
+      <FormControl variant="outlined" style={{ marginBottom: '24px', marginRight: '5px', minWidth: 150 }}>
         <InputLabel id="day-filter-label">Día</InputLabel>
         <Select
           labelId="day-filter-label"
@@ -237,4 +231,3 @@ function AllReservations() {
 }
 
 export default AllReservations;
-

@@ -29,5 +29,8 @@ router.get('/reservas-ultimos-tres-meses', ensureAuthenticated, reservaControlle
 // Nueva ruta para obtener las reservas del último año
 router.get('/reservas-ultimo-anio', ensureAuthenticated, reservaController.obtenerReservasUltimoAnio);
 
+// Otras rutas existentes
+router.patch('/:id/cancel', ensureAuthenticated, reservaController.cancelarReserva);
+
 
 module.exports = router;

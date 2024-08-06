@@ -1,37 +1,63 @@
 import React from 'react';
-import { Card, CardContent, Typography, Button } from '@mui/material';
+import { Card, CardContent, Typography, Button, Box, CardMedia } from '@mui/material';
 import dayjs from 'dayjs';
-import Navbar1 from './Navbar1';
+import reserva2 from '../assets/ultima.png';
 
-const Targeta = ({ reserva, handleEliminar }) => {
+const Targeta = ({ reserva, handleCancelarReserva }) => {
   return (
-    <div>
-    <Card className='targetiña' variant="outlined" style={{ backgroundColor: '#f0f0f0' }}>
-      <CardContent>
-        <Typography variant="h5" component="h2" style={{ color: '#007bff', marginBottom: '10px' }}>
-          Última Reserva
-        </Typography>
-        <Typography variant="body2" color="textSecondary" gutterBottom>
-          <strong>Nombre:</strong> {reserva.nombre}
-        </Typography>
-        <Typography variant="body2" color="textSecondary" gutterBottom>
-          <strong>Teléfono:</strong> {reserva.telefono}
-        </Typography>
-        <Typography variant="body2" color="textSecondary" gutterBottom>
-          <strong>Fecha:</strong> {dayjs(reserva.fecha).format('DD/MM/YYYY')}
-        </Typography>
-        <Typography variant="body2" color="textSecondary" gutterBottom>
-          <strong>Cantidad de Personas:</strong> {reserva.cantidadPersonas}
-        </Typography>
-        <Typography variant="body2" color="textSecondary" gutterBottom>
-          <strong>Tipo de Servicio:</strong> {reserva.tipoServicio}
-        </Typography>
-        <Button onClick={() => handleEliminar(reserva._id)} variant="outlined" style={{ color: '#ff0000', borderColor: '#ff0000', marginTop: '10px' }}>
-          Eliminar Reserva
-        </Button>
-      </CardContent>
-    </Card>
-    </div>
+    <Box
+      display="flex"
+      justifyContent="center"
+      alignItems="center"
+      height="100vh"
+      sx={{ padding: 1 }}
+    >
+      <Card
+        sx={{
+          maxWidth: 350,
+          width: '100%',
+          margin: 'auto',
+          borderRadius: 2,
+          boxShadow: 3,
+        }}
+        variant="outlined"
+      >
+        <CardMedia
+          component="img"
+          height="200"
+          image={reserva2}
+          alt="Imagen de la reserva"
+        />
+        <CardContent sx={{ textAlign: 'center' }}>
+          <Typography variant="h5" component="h2" sx={{ color: '#007bff', mb: 3 }}>
+            Última Reserva
+          </Typography>
+          <Typography variant="body2" gutterBottom>
+            <strong>Nombre:</strong> {reserva.nombre}
+          </Typography>
+          <Typography variant="body2" gutterBottom>
+            <strong>Teléfono:</strong> {reserva.telefono}
+          </Typography>
+          <Typography variant="body2" gutterBottom>
+            <strong>Fecha:</strong> {dayjs(reserva.fecha).format('DD/MM/YYYY')}
+          </Typography>
+          <Typography variant="body2" gutterBottom>
+            <strong>Cantidad de Personas:</strong> {reserva.cantidadPersonas}
+          </Typography>
+          <Typography variant="body2" gutterBottom>
+            <strong>Tipo de Servicio:</strong> {reserva.tipoServicio}
+          </Typography>
+          <Button
+            onClick={handleCancelarReserva}
+            variant="contained"
+            color="secondary"
+            sx={{ mt: 3, display: 'block', mx: 'auto' }}
+          >
+            Cancelar Reserva
+          </Button>
+        </CardContent>
+      </Card>
+    </Box>
   );
 };
 

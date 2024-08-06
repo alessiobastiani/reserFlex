@@ -7,6 +7,8 @@ const timezone = require('dayjs/plugin/timezone');
 const { parse } = require('json2csv');
 const { Parser } = require('json2csv');
 const Configuracion = require('../models/Configuracion'); // Asegúrate de que la ruta al modelo sea correcta
+const Notification = require('../models/notificationModel'); // Importa el modelo Notification
+
 
 // Resto del código del controlador
 
@@ -105,16 +107,16 @@ const crearReserva = async (req, res) => {
 
 
 
-
-
-
-
 const eliminarReserva = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Agregar un log para depuración
-    console.log('UserID:', req.user.id);
+    // Verificar si el usuario es admin
+    if (req.user.role === 'admin') {
+      // Si es admin, eliminar la reserva sin verificar el userId
+      await Reserva.findByIdAndDelete(id);
+      return res.json({ message: 'Reserva eliminada correctamente' });
+    }
 
     // Verificar que la reserva a eliminar pertenece al usuario autenticado
     const reserva = await Reserva.findOne({ _id: id, userId: req.user.id });
@@ -129,6 +131,7 @@ const eliminarReserva = async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 };
+
 
 const actualizarReserva = async (req, res) => {
   try {
@@ -402,6 +405,42 @@ const obtenerReservasUltimoAnio = async (req, res) => {
 };
 
 
+const cancelarReserva = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Verificar que la reserva existe
+    const reserva = await Reserva.findById(id).populate('userId');
+    if (!reserva) {
+      return res.status(404).json({ message: 'Reserva no encontrada' });
+    }
+
+    // Actualizar el estado de la reserva
+    reserva.estado = 'pendiente_cancelacion';
+    await reserva.save();
+
+    // Crear una notificación para el administrador
+    const user = reserva.userId; // Asumiendo que has poblado el campo userId con el usuario completo
+
+    // Formatear la fecha
+    const fechaFormato = reserva.fecha.toLocaleDateString('es-ES');
+
+    // Crear el mensaje de la notificación
+    const notificationMessage = `El usuario ${user.username} ha solicitado cancelar la reserva "${reserva.nombre}" con la fecha ${fechaFormato}.`;
+
+    const adminNotification = new Notification({
+      userId: user._id,
+      message: notificationMessage,
+      leida: false, // Asegúrate de que la notificación esté marcada como no leída al crearla
+    });
+    await adminNotification.save();
+
+    res.json({ message: 'Reserva marcada como pendiente de cancelación y notificación enviada al administrador' });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
 
 
 module.exports = {
@@ -419,5 +458,6 @@ module.exports = {
   descargarReservasUltimoMes,
   obtenerReservasUltimoAnio,
   obtenerReservasUltimosTresMeses,
-  obtenerReservasPorDia
+  obtenerReservasPorDia,
+  cancelarReserva
 };

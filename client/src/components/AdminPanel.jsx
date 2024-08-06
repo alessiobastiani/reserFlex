@@ -1,17 +1,19 @@
-// AdminPanel.js
-import React, { useEffect } from 'react';
+import React from 'react';
+import { ThemeProvider, CssBaseline } from '@mui/material';
+import { useThemeMode } from './themeConfig';
 import Dashboard from './panel/Dashboard';
 
 const AdminPanel = () => {
-  useEffect(() => {
-    console.log('AdminPanel montado');
-    // Otras verificaciones o lógica aquí
-  }, []);
+  const { theme, mode, toggleColorMode } = useThemeMode();
+  
+  // Obtener el rol del usuario desde el almacenamiento local
+  const role = localStorage.getItem('role');
 
   return (
-    <div>
-      <Dashboard/>
-    </div>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Dashboard mode={mode} toggleColorMode={toggleColorMode} role={role} />
+    </ThemeProvider>
   );
 };
 

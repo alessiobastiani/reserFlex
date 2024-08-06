@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import Link from '@mui/material/Link';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -9,6 +8,7 @@ import Title from './Title';
 
 function Orders() {
   const [orders, setOrders] = useState([]);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -33,7 +33,7 @@ function Orders() {
         const data = await response.json();
         setOrders(data.reservas);
       } catch (error) {
-        console.error(error);
+        setError(error.message);
       }
     };
 
@@ -43,30 +43,34 @@ function Orders() {
   return (
     <React.Fragment>
       <Title>Recientes reservas</Title>
-      <Table size="small">
-        <TableHead>
-          <TableRow>
-            <TableCell><b>Fecha</b></TableCell>
-            <TableCell><b>Nombre</b></TableCell>
-            <TableCell><b>Teléfono</b></TableCell>
-            <TableCell><b>Cantidad de Personas</b></TableCell>
-            <TableCell><b>Tipo de Servicio</b></TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {orders.map((order) => (
-            <TableRow key={order._id.$oid}>
-              <TableCell>{new Date(order.fecha).toLocaleDateString()}</TableCell>
-              <TableCell>{order.nombre}</TableCell>
-              <TableCell>{order.telefono}</TableCell>
-              <TableCell>{order.cantidadPersonas}</TableCell>
-              <TableCell>{order.tipoServicio}</TableCell>
+      {error ? (
+        <div>Error: {error}</div>
+      ) : (
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell><b>Fecha</b></TableCell>
+              <TableCell><b>Nombre</b></TableCell>
+              <TableCell><b>Teléfono</b></TableCell>
+              <TableCell><b>Cantidad de Personas</b></TableCell>
+              <TableCell><b>Tipo de Servicio</b></TableCell>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHead>
+          <TableBody>
+            {orders.map((order) => (
+              <TableRow key={order._id}> {/* Usa _id directamente si es único */}
+                <TableCell>{new Date(order.fecha).toLocaleDateString()}</TableCell>
+                <TableCell>{order.nombre}</TableCell>
+                <TableCell>{order.telefono}</TableCell>
+                <TableCell>{order.cantidadPersonas}</TableCell>
+                <TableCell>{order.tipoServicio}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
       <div className='mt-3'>
-        Estas son las Personas que reservan en el ultimo tiempo
+        Estas son las personas que reservaron en el último tiempo.
       </div>
     </React.Fragment>
   );

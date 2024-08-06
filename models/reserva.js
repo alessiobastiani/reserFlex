@@ -1,3 +1,4 @@
+// models/reserva.js
 const mongoose = require('mongoose');
 
 const reservaSchema = new mongoose.Schema({
@@ -7,6 +8,7 @@ const reservaSchema = new mongoose.Schema({
   cantidadPersonas: { type: Number, required: true },
   tipoServicio: { type: String, required: true },
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  estado: { type: String, default: 'confirmada' }, // Nuevo campo para manejar el estado
   createdAt: { type: Date, default: Date.now },
 });
 
